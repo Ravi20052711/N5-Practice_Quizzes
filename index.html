@@ -227,7 +227,7 @@
             border: 1px solid var(--border-color);
             border-radius: 8px;
             font-family: var(--font-mincho);
-            font-size: 1.25rem;
+            font-size: 1.75rem;
             line-height: 2.2;
             color: var(--text-main);
         }
@@ -1453,7 +1453,7 @@
                 const badgeLabel = isCorrect ? 'Correct' : 'Incorrect';
 
                 let audioTranscriptHtml = q.audioScript ? `<div class="explanation-box" style="margin-bottom: 12px; background: #fffbeb;"><strong>Audio Transcript:</strong><br/>${q.audioScript.replace(/\n/g, '<br/>')}</div>` : '';
-                let passageHtml = q.passage ? `<div class="passage-block" style="margin-bottom: 12px; font-size: 1rem; padding: 12px; border-width: 2px;">${q.passage}</div>` : '';
+                let passageHtml = q.passage ? `<div class="passage-block" style="margin-bottom: 12px; font-size: 1.5rem; padding: 12px; border-width: 2px;">${q.passage}</div>` : '';
                 let qJpHtml = q.questionJP ? `<div class="review-q-jp">${q.questionJP}</div>` : '';
 
                 reviewBox.innerHTML += `
