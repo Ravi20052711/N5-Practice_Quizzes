@@ -1,0 +1,1513 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JLPT N5 Mock Exam — 日本語能力試験 N5 模擬試験</title>
+    <meta name="description"
+        content="Free JLPT N5 practice exam with dynamically generated questions. New exam every refresh. No login required." />
+
+    <!-- Open Graph for link previews -->
+    <meta property="og:title" content="JLPT N5 Mock Exam" />
+    <meta property="og:description"
+        content="Free browser-based JLPT N5 practice test. 35 dynamic questions — vocabulary, grammar, reading. New exam every time." />
+    <meta property="og:type" content="website" />
+
+    <!-- Favicon -->
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🇯🇵</text></svg>" />
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap"
+        rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --vocab-color: #ef4444;
+            --grammar-color: #3b82f6;
+            --reading-color: #10b981;
+            --listening-color: #f59e0b;
+
+            --correct-color: #22c55e;
+            --incorrect-color: #ef4444;
+
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --hover-bg: #f1f5f9;
+
+            --font-ui: 'Inter', sans-serif;
+            --font-jp: 'Noto Sans JP', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-ui);
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.5;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .screen {
+            display: none;
+            flex-direction: column;
+            gap: 20px;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Loading & Error Screens */
+        .center-screen {
+            flex: 1;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            gap: 16px;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: var(--font-ui);
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #2563eb;
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 2px solid var(--border-color);
+            color: var(--text-main);
+        }
+
+        .btn-outline:hover {
+            background-color: var(--hover-bg);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Top Bar */
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        .badge {
+            padding: 4px 12px;
+            border-radius: 9999px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: white;
+        }
+
+        .badge.vocab {
+            background-color: var(--vocab-color);
+        }
+
+        .badge.grammar {
+            background-color: var(--grammar-color);
+        }
+
+        .badge.reading {
+            background-color: var(--reading-color);
+        }
+
+        .badge.listening {
+            background-color: var(--listening-color);
+        }
+
+        .timer {
+            font-variant-numeric: tabular-nums;
+            font-weight: 700;
+            font-size: 1.25rem;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            margin: 10px 0;
+        }
+
+        .progress-text {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .progress-track {
+            height: 8px;
+            background: var(--border-color);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--primary);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* Question Card */
+        .question-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .passage-block {
+            background: var(--bg-color);
+            padding: 24px;
+            border-left: 4px solid var(--reading-color);
+            border-radius: 0 8px 8px 0;
+            font-family: var(--font-jp);
+            font-size: 1.25rem;
+            line-height: 1.8;
+            color: var(--text-main);
+        }
+
+        .question-jp {
+            font-family: var(--font-jp);
+            font-size: 1.5rem;
+            font-weight: 500;
+            color: var(--text-main);
+            text-align: center;
+            margin: 16px 0;
+        }
+
+        .question-en {
+            font-size: 1.125rem;
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        .options-grid {
+            display: grid;
+            gap: 16px;
+        }
+
+        .option-btn {
+            display: flex;
+            align-items: center;
+            padding: 16px 20px;
+            background: var(--card-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+            font-family: var(--font-jp);
+            font-size: 1.125rem;
+            color: var(--text-main);
+        }
+
+        .option-btn:hover {
+            border-color: var(--primary);
+            background: var(--hover-bg);
+        }
+
+        .option-btn.selected {
+            border-color: var(--primary);
+            background: #eff6ff;
+            box-shadow: 0 0 0 2px var(--primary) inset;
+        }
+
+        .option-marker {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            width: 28px;
+            height: 28px;
+            background: #f1f5f9;
+            border-radius: 6px;
+            margin-right: 16px;
+            font-weight: 600;
+            font-family: var(--font-ui);
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        .option-btn.selected .option-marker {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Navigation */
+        .nav-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        .dot-map {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--border-color);
+            cursor: pointer;
+        }
+
+        .dot.answered {
+            background: var(--primary);
+        }
+
+        .dot.current {
+            box-shadow: 0 0 0 3px var(--hover-bg), 0 0 0 4px var(--primary);
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 100;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 32px;
+            border-radius: 16px;
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 16px;
+            margin-top: 24px;
+            justify-content: center;
+        }
+
+        /* Results Screen */
+        .score-card {
+            background: white;
+            padding: 32px;
+            border-radius: 16px;
+            text-align: center;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+        }
+
+        .score-percentage {
+            font-size: 4rem;
+            font-weight: 700;
+            color: var(--primary);
+            line-height: 1;
+            margin: 16px 0;
+        }
+
+        .stat-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin: 24px 0;
+        }
+
+        .stat-card {
+            background: var(--hover-bg);
+            padding: 16px;
+            border-radius: 12px;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .review-section {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .review-item {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            border-left: 6px solid var(--border-color);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        .review-item.correct {
+            border-left-color: var(--correct-color);
+        }
+
+        .review-item.incorrect {
+            border-left-color: var(--incorrect-color);
+        }
+
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .review-badge {
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: white;
+        }
+
+        .review-badge.correct {
+            background: var(--correct-color);
+        }
+
+        .review-badge.incorrect {
+            background: var(--incorrect-color);
+        }
+
+        .review-q-jp {
+            font-family: var(--font-jp);
+            font-size: 1.25rem;
+            margin-bottom: 4px;
+        }
+
+        .review-q-en {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            margin-bottom: 12px;
+        }
+
+        .review-detail {
+            margin: 4px 0;
+            font-size: 0.95rem;
+        }
+
+        .review-detail.wrong-ans {
+            color: var(--incorrect-color);
+            text-decoration: line-through;
+        }
+
+        .review-detail.correct-ans {
+            color: var(--correct-color);
+            font-weight: 600;
+        }
+
+        .explanation-box {
+            margin-top: 12px;
+            padding: 12px;
+            background: var(--hover-bg);
+            border-radius: 8px;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .breakdown-bar {
+            background: var(--border-color);
+            height: 8px;
+            border-radius: 4px;
+            margin: 8px 0;
+            overflow: hidden;
+        }
+
+        .breakdown-section {
+            margin-bottom: 20px;
+        }
+
+        .breakdown-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        @media (max-width: 600px) {
+            .stat-cards {
+                grid-template-columns: 1fr;
+            }
+
+            .nav-controls {
+                flex-direction: column-reverse;
+                gap: 16px;
+            }
+
+            .nav-controls .btn {
+                width: 100%;
+            }
+
+            .question-card {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <!-- Loading Screen -->
+        <div id="loading-screen" class="screen active center-screen">
+            <h2>Loading Exam Data...</h2>
+            <p>Fetching vocabulary from live sources.</p>
+            <div style="width: 200px; height: 4px; background: #e2e8f0; border-radius: 2px; overflow: hidden;">
+                <div style="width: 50%; height: 100%; background: var(--primary); animation: load 1s infinite linear;">
+                </div>
+            </div>
+            <style>
+                @keyframes load {
+                    0% {
+                        transform: translateX(-100%);
+                    }
+
+                    100% {
+                        transform: translateX(200%);
+                    }
+                }
+            </style>
+        </div>
+
+        <!-- Error Screen -->
+        <div id="error-screen" class="screen center-screen">
+            <h2 style="color: var(--incorrect-color);">Connection Error</h2>
+            <p>Failed to load data from all available sources.</p>
+            <button class="btn btn-primary" onclick="window.location.reload()">Retry Connection</button>
+        </div>
+
+        <!-- Start Screen -->
+        <div id="start-screen" class="screen center-screen">
+            <h1 style="font-family: var(--font-jp); font-size: 2rem;">日本語能力試験 N5</h1>
+            <h2>JLPT N5 Mock Exam</h2>
+            <div class="score-card" style="max-width: 400px; margin: 20px auto;">
+                <div class="breakdown-section" style="text-align: left;">
+                    <div class="breakdown-header"><span>Vocabulary · 語彙</span> <span>15 Qs</span></div>
+                </div>
+                <div class="breakdown-section" style="text-align: left;">
+                    <div class="breakdown-header"><span>Grammar · 文法</span> <span>12 Qs</span></div>
+                </div>
+                <div class="breakdown-section" style="text-align: left;">
+                    <div class="breakdown-header"><span>Reading · 読解</span> <span>8 Qs</span></div>
+                </div>
+                <div class="breakdown-section" style="text-align: left;">
+                    <div class="breakdown-header"><span>Listening · 聴解</span> <span>5 Qs</span></div>
+                </div>
+                <hr style="border: none; border-top: 1px solid var(--border-color); margin: 16px 0;" />
+                <div class="breakdown-header"><span>Total</span> <span>40 Qs</span></div>
+            </div>
+            <p style="color: var(--text-muted);">Dynamically generated • Different every time</p>
+            <button class="btn btn-primary" style="font-size: 1.25rem; padding: 16px 48px;" onclick="startExam()">Begin
+                Exam</button>
+        </div>
+
+        <!-- Exam Screen -->
+        <div id="exam-screen" class="screen">
+            <div class="top-bar">
+                <span id="section-badge" class="badge">N5</span>
+                <div id="timer" class="timer">00:00</div>
+            </div>
+
+            <div class="progress-container">
+                <div class="progress-text">
+                    <span id="progress-label">Question 1 of 35</span>
+                    <span id="progress-percent">0%</span>
+                </div>
+                <div class="progress-track">
+                    <div id="progress-bar" class="progress-fill"></div>
+                </div>
+            </div>
+
+            <div class="question-card">
+                <button id="btn-play-audio" class="btn btn-primary" onclick="playCurrentAudio()" style="display: none; margin: 0 auto; margin-bottom: 16px; font-size: 1.25rem; max-width: 250px;">
+                    🔊 Play Audio
+                </button>
+                <div id="passage-container" class="passage-block" style="display: none;"></div>
+
+                <div id="question-text-container">
+                    <div id="question-jp" class="question-jp"></div>
+                    <div id="question-en" class="question-en"></div>
+                </div>
+
+                <div id="options-container" class="options-grid"></div>
+            </div>
+
+            <div class="nav-controls">
+                <button id="btn-prev" class="btn btn-outline" onclick="navigate(-1)">← Previous</button>
+                <button id="btn-next" class="btn btn-primary" onclick="navigate(1)">Next →</button>
+                <button id="btn-submit" class="btn btn-primary" style="display: none; background: #10b981;"
+                    onclick="promptSubmit()">Submit Exam</button>
+            </div>
+
+            <div id="dot-map" class="dot-map"></div>
+        </div>
+
+        <!-- Results Screen -->
+        <div id="results-screen" class="screen">
+            <div class="score-card">
+                <h2>Exam Results</h2>
+                <div id="score-verdict"
+                    style="font-family: var(--font-jp); font-size: 1.5rem; color: var(--text-muted); margin-top: 8px;">
+                </div>
+                <div id="score-percentage" class="score-percentage">0%</div>
+
+                <div class="stat-cards">
+                    <div class="stat-card">
+                        <div id="stat-correct" class="stat-value" style="color: var(--correct-color);">0</div>
+                        <div class="stat-label">Correct</div>
+                    </div>
+                    <div class="stat-card">
+                        <div id="stat-wrong" class="stat-value" style="color: var(--incorrect-color);">0</div>
+                        <div class="stat-label">Incorrect</div>
+                    </div>
+                    <div class="stat-card">
+                        <div id="stat-time" class="stat-value">00:00</div>
+                        <div class="stat-label">Time Taken</div>
+                    </div>
+                </div>
+
+                <div style="text-align: left; margin-top: 32px;">
+                    <h3 style="margin-bottom: 16px;">Section Breakdown</h3>
+                    <div id="breakdown-container"></div>
+                </div>
+
+                <div class="modal-actions" style="margin-top: 32px;">
+                    <button class="btn btn-primary" onclick="window.location.reload()">Take Another Exam</button>
+                    <button class="btn btn-outline" onclick="copyResults()">Copy Results</button>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 16px;">Question Review</h3>
+            <div id="review-container" class="review-section"></div>
+        </div>
+
+        <!-- Submit Modal -->
+        <div id="submit-modal" class="modal">
+            <div class="modal-content">
+                <h2 style="margin-bottom: 16px;">Submit Exam?</h2>
+                <p id="submit-warning" style="color: var(--text-muted); margin-bottom: 16px;"></p>
+                <div class="modal-actions">
+                    <button class="btn btn-outline" onclick="closeModal()">Go Back</button>
+                    <button class="btn btn-primary" style="background: #10b981;"
+                        onclick="finalizeExam()">Submit</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* ==========================================
+           DATA LAYER
+        ========================================== */
+        const DATA_SOURCES = [
+            "https://jlpt-vocab-api.vercel.app/api/words?level=5&limit=200",
+            "https://jlpt-vocab-api.vercel.app/api/words?level=n5&limit=200",
+            "https://raw.githubusercontent.com/hutchiep190/jlpt-vocab/refs/heads/master/n5.json"
+        ];
+
+        async function fetchVocabData() {
+            for (const url of DATA_SOURCES) {
+                try {
+                    const controller = new AbortController();
+                    const timeout = setTimeout(() => controller.abort(), 8000);
+                    const response = await fetch(url, { signal: controller.signal });
+                    clearTimeout(timeout);
+
+                    if (!response.ok) continue;
+
+                    const rawData = await response.json();
+                    const normalized = normalizeData(rawData);
+
+                    if (normalized.length >= 40) return normalized;
+                } catch (e) {
+                    console.warn(`Source failed: ${url}`);
+                    continue;
+                }
+            }
+            throw new Error("All data sources failed");
+        }
+
+        function normalizeData(data) {
+            let arr = Array.isArray(data) ? data : (data.words || data.data || []);
+            return arr.map(item => ({
+                word: item.word || item.kanji || item.expression || item.term || "",
+                meaning: item.meaning || item.english || item.eng || (Array.isArray(item.meanings) ? item.meanings.join(", ") : "") || "",
+                reading: item.reading || item.furigana || item.kana || item.hiragana || ""
+            })).filter(w => w.word !== "" && w.meaning !== "");
+        }
+
+        /* ==========================================
+           UTILITIES
+        ========================================== */
+        function shuffleArray(array) {
+            const copy = [...array];
+            for (let i = copy.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [copy[i], copy[j]] = [copy[j], copy[i]];
+            }
+            return copy;
+        }
+
+        function pickRandom(array, n) {
+            return shuffleArray(array).slice(0, n);
+        }
+
+        function randomItem(array) {
+            if (!array || array.length === 0) return null;
+            return array[Math.floor(Math.random() * array.length)];
+        }
+
+        function categorizeWords(words) {
+            const nouns = [];
+            const verbs = [];
+            const adjectives = [];
+            const all = words;
+
+            words.forEach(w => {
+                const meaning = w.meaning.toLowerCase();
+                if (meaning.startsWith("to ")) {
+                    verbs.push(w);
+                } else if (w.reading.endsWith("い") && w.word.length > 1 && !meaning.startsWith("to ")) {
+                    adjectives.push(w);
+                } else if (!meaning.startsWith("to ") && !meaning.includes("adjective")) {
+                    nouns.push(w);
+                }
+            });
+
+            return { nouns, verbs, adjectives, all };
+        }
+
+        function withFurigana(wordObj) {
+            if (!wordObj || !wordObj.word) return "";
+            if (!wordObj.reading || wordObj.word === wordObj.reading) return wordObj.word;
+            return `<ruby>${wordObj.word}<rt>${wordObj.reading}</rt></ruby>`;
+        }
+
+        /* ==========================================
+           QUESTION GENERATORS
+        ========================================== */
+        function generateVocabularyQuestions(words, count = 15) {
+            let pool = shuffleArray(words);
+            const questions = [];
+
+            for (let i = 0; i < pool.length && questions.length < count; i++) {
+                const target = pool[i];
+                let type = randomItem(["meaning", "word", "reading"]);
+
+                if (type === "reading" && (!target.reading || target.word === target.reading)) {
+                    type = randomItem(["meaning", "word"]);
+                }
+
+                let correctText = "";
+                let distractors = [];
+                let distractorPool = pool.filter(w => w !== target);
+
+                let q = { section: "vocab", passage: null };
+
+                if (type === "meaning") {
+                    q.questionJP = withFurigana(target);
+                    q.questionEN = "What is the meaning of this word?";
+                    correctText = target.meaning;
+                    distractors = pickRandom(distractorPool.filter(w => w.meaning !== target.meaning), 3).map(w => w.meaning);
+                } else if (type === "word") {
+                    q.questionJP = null;
+                    q.questionEN = `Which word means "${target.meaning}"?`;
+                    correctText = `${withFurigana(target)}`;
+                    distractors = pickRandom(distractorPool.filter(w => w.word !== target.word), 3).map(w => `${withFurigana(w)}`);
+                } else if (type === "reading") {
+                    q.questionJP = target.word;
+                    q.questionEN = "How do you read this word?";
+                    correctText = target.reading;
+                    distractors = pickRandom(distractorPool.filter(w => w.reading !== target.reading), 3).map(w => w.reading);
+                }
+
+                while (distractors.length < 3) distractors.push("Fallback Distractor " + distractors.length);
+
+                q.correctAnswer = correctText;
+                q.options = shuffleArray([
+                    { text: correctText, correct: true },
+                    ...distractors.slice(0, 3).map(d => ({ text: d, correct: false }))
+                ]);
+                q.explanation = `Word: ${target.word} | Reading: ${target.reading} | Meaning: ${target.meaning}`;
+                questions.push(q);
+            }
+            return questions;
+        }
+
+        function generateGrammarQuestions(categorized, count = 12) {
+            const { nouns, verbs, adjectives, all } = categorized;
+            const questions = [];
+            const usedWords = new Set();
+
+            const getW = (arr) => {
+                let w = shuffleArray(arr).find(item => !usedWords.has(item.word));
+                if (!w) w = randomItem(arr);
+                usedWords.add(w.word);
+                return w;
+            };
+
+            const builders = [
+                () => {
+                    const gNoun = getW(nouns.length > 0 ? nouns : all);
+                    const gVerb = getW(verbs.length > 0 ? verbs : all);
+                    const particles = [
+                        { text: "に", desc: "target/time" }, { text: "へ", desc: "direction" },
+                        { text: "で", desc: "context/tool" }, { text: "を", desc: "object" },
+                        { text: "は", desc: "topic" }, { text: "が", desc: "subject" }
+                    ];
+                    const correct = randomItem(particles);
+                    const distractors = pickRandom(particles.filter(p => p !== correct), 3);
+
+                    return {
+                        section: "grammar", passage: null,
+                        questionJP: `${withFurigana(gNoun)} ＿＿ ${withFurigana(gVerb)}。`,
+                        questionEN: "Choose the correct particle for the blank.",
+                        correctAnswer: correct.text,
+                        options: shuffleArray([
+                            { text: correct.text, correct: true },
+                            ...distractors.map(d => ({ text: d.text, correct: false }))
+                        ]),
+                        explanation: `In context of ${gNoun.word} (${gNoun.meaning}) and ${gVerb.word} (${gVerb.meaning}). Particle '${correct.text}' relates to ${correct.desc}.`
+                    };
+                },
+                () => {
+                    const gAdj = getW(adjectives.length > 0 ? adjectives : all);
+                    let base = gAdj.word;
+                    if (base.endsWith("い")) base = base.slice(0, -1);
+
+                    const forms = [
+                        { suffix: "いです", type: "present positive" }, { suffix: "くないです", type: "present negative" },
+                        { suffix: "かったです", type: "past positive" }, { suffix: "くなかったです", type: "past negative" }
+                    ];
+                    const correct = randomItem(forms);
+                    const distractors = pickRandom(forms.filter(f => f !== correct), 3);
+                    let contextSpan = correct.type.includes("past") ? "きのう、" : "きょう、";
+
+                    return {
+                        section: "grammar", passage: null,
+                        questionJP: `${contextSpan}この ${withFurigana(gAdj)} は ＿＿＿。`,
+                        questionEN: `Fill in the blank with the correct ${correct.type} form.`,
+                        correctAnswer: base + correct.suffix,
+                        options: shuffleArray([
+                            { text: base + correct.suffix, correct: true },
+                            ...distractors.map(d => ({ text: base + d.suffix, correct: false }))
+                        ]),
+                        explanation: `${gAdj.word} (${gAdj.meaning}) becomes ${base + correct.suffix} in ${correct.type} form.`
+                    };
+                },
+                () => {
+                    const gNoun = getW(nouns.length > 0 ? nouns : all);
+                    const forms = [
+                        { suffix: "です", desc: "It is" }, { suffix: "じゃないです", desc: "It is not" },
+                        { suffix: "でした", desc: "It was" }, { suffix: "じゃなかったです", desc: "It was not" }
+                    ];
+                    const correct = randomItem(forms);
+                    const distractors = pickRandom(forms.filter(f => f !== correct), 3);
+
+                    return {
+                        section: "grammar", passage: null,
+                        questionJP: `それは ${withFurigana(gNoun)} ＿＿＿。`,
+                        questionEN: `Complete the sentence: "${correct.desc} a ${gNoun.meaning}".`,
+                        correctAnswer: correct.suffix,
+                        options: shuffleArray([
+                            { text: correct.suffix, correct: true },
+                            ...distractors.map(d => ({ text: d.suffix, correct: false }))
+                        ]),
+                        explanation: `Using ${correct.suffix} means "${correct.desc}" for the noun ${gNoun.word}.`
+                    };
+                },
+                () => {
+                    const qWords = [
+                        { word: "なに", meaning: "what" }, { word: "だれ", meaning: "who" },
+                        { word: "どこ", meaning: "where" }, { word: "いつ", meaning: "when" }
+                    ];
+                    const correct = randomItem(qWords);
+                    const distractors = pickRandom(qWords.filter(q => q !== correct), 3);
+                    const gVerb = getW(verbs.length > 0 ? verbs : all);
+                    let particle = (correct.word === "どこ") ? "に" : (correct.word === "なに") ? "を" : "が";
+
+                    return {
+                        section: "grammar", passage: null,
+                        questionJP: `＿＿ ${particle} ${withFurigana(gVerb)}か。`,
+                        questionEN: `Fill in the missing question word meaning "${correct.meaning}".`,
+                        correctAnswer: correct.word,
+                        options: shuffleArray([
+                            { text: correct.word, correct: true },
+                            ...distractors.map(d => ({ text: d.word, correct: false }))
+                        ]),
+                        explanation: `"${correct.word}" means "${correct.meaning}". Sentence uses ${gVerb.word} (${gVerb.meaning}).`
+                    };
+                },
+                () => {
+                    const v1 = getW(verbs.length > 0 ? verbs : all);
+                    const forms = [
+                        { text: "て", rule: "and then" }, { text: "てから", rule: "after doing" },
+                        { text: "たり", rule: "doing things like" }, { text: "ないで", rule: "without doing" }
+                    ];
+                    const correct = randomItem(forms);
+                    const distractors = pickRandom(forms.filter(f => f !== correct), 3);
+                    let base = v1.word.length > 1 ? v1.word.slice(0, -1) : v1.word;
+
+                    return {
+                        section: "grammar", passage: null,
+                        questionJP: `${withFurigana(v1)}の＿＿＿、学校へ行きます。`,
+                        questionEN: `Select the correct connective form for "${correct.rule}".`,
+                        correctAnswer: base + correct.text,
+                        options: shuffleArray([
+                            { text: base + correct.text, correct: true },
+                            ...distractors.map(d => ({ text: base + d.text, correct: false }))
+                        ]),
+                        explanation: `Forming ${correct.rule} with ${v1.word} (${v1.meaning}) uses suffix ${correct.text}.`
+                    }
+                }
+            ];
+
+            for (let i = 0; i < count; i++) {
+                questions.push(builders[i % builders.length]());
+            }
+            return questions;
+        }
+
+        function generateReadingQuestions(categorized, count = 8) {
+            const { nouns, verbs, all } = categorized;
+            const questions = [];
+            const usedWords = new Set();
+
+            const getW = (arr) => {
+                let w = shuffleArray(arr).find(item => !usedWords.has(item.word));
+                if (!w) w = randomItem(arr);
+                usedWords.add(w.word);
+                return w;
+            };
+
+            const names = shuffleArray(["田中さん", "山田さん", "佐藤さん", "鈴木さん", "高橋さん"]);
+            let nameIndex = 0;
+
+            const builders = [
+                () => {
+                    const name1 = names[nameIndex++ % names.length];
+                    const name2 = names[nameIndex++ % names.length];
+                    const w1 = getW(nouns.length > 0 ? nouns : all);
+                    const w2 = getW(nouns.length > 0 ? nouns : all);
+
+                    return {
+                        section: "reading",
+                        passage: `<b>${name1}:</b> すみません、${withFurigana(w1)} は どこですか。<br><br><b>${name2}:</b> ${withFurigana(w1)} ですか。あそこに ${withFurigana(w2)} が ありますね。その となりです。<br><br><b>${name1}:</b> わかりました。ありがとうございます。`,
+                        questionJP: `${withFurigana(w1)} は どこに ありますか。`,
+                        questionEN: `Where is the ${w1.meaning}?`,
+                        correctAnswer: `${w2.word} の となり (Next to the ${w2.meaning})`,
+                        options: shuffleArray([
+                            { text: `${w2.word} の となり (Next to the ${w2.meaning})`, correct: true },
+                            { text: `${w2.word} の なか (Inside the ${w2.meaning})`, correct: false },
+                            { text: `${w2.word} の まえ (In front of the ${w2.meaning})`, correct: false },
+                            { text: `${w2.word} の うしろ (Behind the ${w2.meaning})`, correct: false }
+                        ]),
+                        explanation: `In the conversation, ${name2} says the ${w1.word} is next to (となり) the ${w2.word}.`
+                    };
+                },
+                () => {
+                    const name1 = names[nameIndex++ % names.length];
+                    const name2 = names[nameIndex++ % names.length];
+                    const w1 = getW(nouns.length > 0 ? nouns : all);
+                    const w2 = getW(verbs.length > 0 ? verbs : all);
+
+                    return {
+                        section: "reading",
+                        passage: `<b>${name1}：</b> きのう ${withFurigana(w1)} を 買いました。とても よかったですよ。<br><br><b>${name2}：</b> いいですね。私も ${withFurigana(w1)} が 欲しいです。どこで 買いましたか。<br><br><b>${name1}：</b> 駅の ちかくの デパートです。そこで よく ${withFurigana(w2)}。`,
+                        questionJP: `${name2} は これから 何をする と 思いますか。`,
+                        questionEN: `What will ${name2} likely do next?`,
+                        correctAnswer: `${w1.word} を 買うために デパートに行く (Go to the department store to buy ${w1.meaning})`,
+                        options: shuffleArray([
+                            { text: `${w1.word} を 買うために デパートに行く (Go to the department store to buy ${w1.meaning})`, correct: true },
+                            { text: `${w1.word} を 売るために 駅へ行く (Go to the station to sell ${w1.meaning})`, correct: false },
+                            { text: `${name1} に ${w1.word} を もらう (Receive ${w1.meaning} from ${name1})`, correct: false },
+                            { text: `家で 休みます (Rest at home)`, correct: false }
+                        ]),
+                        explanation: `${name2} says "私も ${w1.word} が 欲しいです" (I also want ${w1.word}), so they want to buy it at the department store.`
+                    };
+                },
+                () => {
+                    const w1 = getW(nouns.length > 0 ? nouns : all);
+                    const w2 = getW(nouns.length > 0 ? nouns : all);
+
+                    return {
+                        section: "reading",
+                        passage: `<div style="text-align: center; border-bottom: 2px solid var(--border-color); margin-bottom: 12px; font-weight: bold; padding-bottom: 8px;">お知らせ (Notice)</div>あしたの パーティーは、午後 ６時に はじまります。<br>ばしょは <b>${withFurigana(w1)}</b> です。<br>みんなで <b>${withFurigana(w2)}</b> を 食べますから、飲み物だけ 持ってきて ください。食べ物は いりません。`,
+                        questionJP: `パーティーに 行く人は 何を 持って いきますか。`,
+                        questionEN: `What should people going to the party bring?`,
+                        correctAnswer: `飲み物 (Drinks)`,
+                        options: shuffleArray([
+                            { text: `飲み物 (Drinks)`, correct: true },
+                            { text: `飲み物と 食べ物 (Drinks and food)`, correct: false },
+                            { text: `${w2.word} (Bring ${w2.meaning})`, correct: false },
+                            { text: `何も 持っていかない (Bring nothing)`, correct: false }
+                        ]),
+                        explanation: `The notice says "飲み物だけ 持ってきて ください" (Please bring only drinks).`
+                    };
+                },
+                () => {
+                    const w1 = getW(nouns.length > 0 ? nouns : all);
+                    const w2 = getW(verbs.length > 0 ? verbs : all);
+
+                    return {
+                        section: "reading",
+                        passage: `私の 趣味は <b>${withFurigana(w1)}</b> です。<br>週末は いつも 友だちと いっしょに <b>${withFurigana(w1)}</b> を します。<br>でも、雨の 日は 家で <b>${withFurigana(w2)}</b>。<br>来週の 日曜日は 晴れると いいです。`,
+                        questionJP: `この人は 雨の 日に 何を しますか。`,
+                        questionEN: `What does this person do on rainy days?`,
+                        correctAnswer: `家で ${w2.word} (At home: ${w2.meaning})`,
+                        options: shuffleArray([
+                            { text: `家で ${w2.word} (At home: ${w2.meaning})`, correct: true },
+                            { text: `友だちと ${w1.word} を します (Do ${w1.meaning} with friends)`, correct: false },
+                            { text: `外で ${w1.word} を します (Do ${w1.meaning} outside)`, correct: false },
+                            { text: `何もしません (Do nothing)`, correct: false }
+                        ]),
+                        explanation: `The passage says "雨の 日は 家で ${w2.word}" (On rainy days, at home ${w2.meaning}).`
+                    };
+                },
+                () => {
+                    const name = names[nameIndex++ % names.length];
+                    const w1 = getW(nouns.length > 0 ? nouns : all);
+                    const w2 = getW(nouns.length > 0 ? nouns : all);
+                    const w3 = getW(nouns.length > 0 ? nouns : all);
+
+                    return {
+                        section: "reading",
+                        passage: `${name}は ${withFurigana(w1)} です。毎朝 ${withFurigana(w2)} へ 行きます。${withFurigana(w3)} が 大好きですから、毎日 ${withFurigana(w3)} について 勉強しています。将来は 立派な ${withFurigana(w1)} に なりたいです。`,
+                        questionJP: `${name}は 将来 何に なりたいですか。`,
+                        questionEN: `What does ${name} want to become in the future?`,
+                        correctAnswer: `立派な ${w1.word} (A fine ${w1.meaning})`,
+                        options: shuffleArray([
+                            { text: `立派な ${w1.word} (A fine ${w1.meaning})`, correct: true },
+                            { text: `${w2.word} (A ${w2.meaning})`, correct: false },
+                            { text: `${w3.word} (A ${w3.meaning})`, correct: false },
+                            { text: `先生 (Teacher)`, correct: false }
+                        ]),
+                        explanation: `The passage states "将来は 立派な ${w1.word} に なりたいです", meaning they want to become a ${w1.meaning}.`
+                    };
+                }
+            ];
+
+            for (let i = 0; i < count; i++) {
+                questions.push(builders[i % builders.length]());
+            }
+            return shuffleArray(questions);
+        }
+
+        function generateListeningQuestions(categorized, count = 5) {
+            const { nouns, verbs, all } = categorized;
+            const questions = [];
+            const usedWords = new Set();
+
+            const getW = (arr) => {
+                let w = shuffleArray(arr).find(item => !usedWords.has(item.word));
+                if (!w) w = randomItem(arr);
+                usedWords.add(w.word);
+                return w;
+            };
+
+            const builders = [
+                () => {
+                    const w1 = getW(nouns.length > 0 ? nouns : all);
+                    const w2 = getW(nouns.length > 0 ? nouns : all);
+                    
+                    return {
+                        section: "listening",
+                        passage: null,
+                        audioScript: `男の人と女の人が話しています。\n男：すみません、${w1.word} はどこですか。\n女：${w1.word} ですか。あそこに ${w2.word} がありますね。そのとなりです。\n【質問】${w1.word} はどこにありますか。`,
+                        questionJP: "音声を聞いて、正しい答えを選んでください。",
+                        questionEN: "Listen to the audio and choose the correct answer.",
+                        correctAnswer: `${w2.word} の となり (Next to the ${w2.meaning})`,
+                        options: shuffleArray([
+                            { text: `${w2.word} の となり (Next to the ${w2.meaning})`, correct: true },
+                            { text: `${w2.word} の なか (Inside the ${w2.meaning})`, correct: false },
+                            { text: `${w2.word} の まえ (In front of the ${w2.meaning})`, correct: false },
+                            { text: `${w2.word} の うしろ (Behind the ${w2.meaning})`, correct: false }
+                        ]),
+                        explanation: `The woman says the ${w1.word} is next to (となり) the ${w2.word}.`
+                    };
+                },
+                () => {
+                    const w1 = getW(verbs.length > 0 ? verbs : all);
+                    const w2 = getW(nouns.length > 0 ? nouns : all);
+                    return {
+                        section: "listening",
+                        passage: null,
+                        audioScript: `先生が学生に話しています。\n先生：みなさん、あしたはテストがありますから、今日は家でよく ${w1.word} してください。${w2.word} を忘れないでください。\n【質問】学生は今日、家で何をしますか。`,
+                        questionJP: "音声を聞いて、正しい答えを選んでください。",
+                        questionEN: "Listen to the audio and choose the correct answer.",
+                        correctAnswer: `家でよく ${w1.word} する (At home: ${w1.meaning})`,
+                        options: shuffleArray([
+                            { text: `家でよく ${w1.word} する (At home: ${w1.meaning})`, correct: true },
+                            { text: `${w2.word} を忘れる (Forget the ${w2.meaning})`, correct: false },
+                            { text: `学校でテストをする (Take a test at school)`, correct: false },
+                            { text: `何もしない (Do nothing)`, correct: false }
+                        ]),
+                        explanation: `The teacher explicitly asked them to "${w1.word}" at home.`
+                    };
+                },
+                () => {
+                    const w1 = getW(nouns.length > 0 ? nouns : all);
+                    const w2 = getW(nouns.length > 0 ? nouns : all);
+                    return {
+                        section: "listening",
+                        passage: null,
+                        audioScript: `女の人がお店の人と話しています。\n女：すみません、${w1.word} はありますか。\n店の人：申し訳ありません、${w1.word} はありません。${w2.word} ならありますが…。\n女：そうですか。じゃあ、${w2.word} をお願いします。\n【質問】女の人は何を買いますか。`,
+                        questionJP: "音声を聞いて、正しい答えを選んでください。",
+                        questionEN: "Listen to the audio and choose the correct answer.",
+                        correctAnswer: `${w2.word} を買う (Buy ${w2.meaning})`,
+                        options: shuffleArray([
+                            { text: `${w2.word} を買う (Buy ${w2.meaning})`, correct: true },
+                            { text: `${w1.word} を買う (Buy ${w1.meaning})`, correct: false },
+                            { text: `両方買う (Buy both)`, correct: false },
+                            { text: `何も買わない (Buy nothing)`, correct: false }
+                        ]),
+                        explanation: `The shop doesn't have ${w1.word}, so the woman says "じゃあ、${w2.word}をお願いします" (I'll take the ${w2.word}).`
+                    };
+                }
+            ];
+
+            for (let i = 0; i < count; i++) {
+                questions.push(builders[i % builders.length]());
+            }
+            return shuffleArray(questions);
+        }
+
+        function generateExam(words) {
+            const categorized = categorizeWords(words);
+            const vocab = shuffleArray(generateVocabularyQuestions(words, 15));
+            const grammar = shuffleArray(generateGrammarQuestions(categorized, 12));
+            const reading = shuffleArray(generateReadingQuestions(categorized, 8));
+            const listening = shuffleArray(generateListeningQuestions(categorized, 5));
+
+            return [...vocab, ...grammar, ...reading, ...listening];
+        }
+
+        /* ==========================================
+           STATE & UI
+        ========================================== */
+        let examQuestions = [];
+        let userAnswers = [];
+        let currentIndex = 0;
+        let timerInterval;
+        let startTime;
+        let timeTakenSeconds = 0;
+
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        async function init() {
+            try {
+                const words = await fetchVocabData();
+                examQuestions = generateExam(words);
+                userAnswers = new Array(examQuestions.length).fill(null);
+                showScreen('start-screen');
+            } catch (error) {
+                showScreen('error-screen');
+            }
+        }
+
+        function startExam() {
+            showScreen('exam-screen');
+            currentIndex = 0;
+            renderNavDots();
+            renderQuestion();
+            startTime = Date.now();
+            startTimer();
+        }
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                timeTakenSeconds = elapsed;
+                document.getElementById('timer').innerText = formatTime(elapsed);
+            }, 1000);
+        }
+
+        function formatTime(seconds) {
+            const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+            const s = (seconds % 60).toString().padStart(2, '0');
+            return `${m}:${s}`;
+        }
+
+        function renderQuestion() {
+            const q = examQuestions[currentIndex];
+
+            // Top bar & Progress
+            const sectionName = q.section.charAt(0).toUpperCase() + q.section.slice(1);
+            const badge = document.getElementById('section-badge');
+            badge.innerText = `${sectionName} · ${q.section === 'vocab' ? '語彙' : q.section === 'grammar' ? '文法' : q.section === 'reading' ? '読解' : '聴解'}`;
+            badge.className = `badge ${q.section}`;
+
+            const pct = Math.round(((currentIndex + 1) / examQuestions.length) * 100);
+            document.getElementById('progress-label').innerText = `Question ${currentIndex + 1} of ${examQuestions.length}`;
+            document.getElementById('progress-percent').innerText = `${pct}%`;
+            document.getElementById('progress-bar').style.width = `${pct}%`;
+
+            // Passage and Listening Toggle
+            const pBox = document.getElementById('passage-container');
+            const audioBtn = document.getElementById('btn-play-audio');
+            const qTextContainer = document.getElementById('question-text-container');
+            
+            if (q.section === 'listening') {
+                audioBtn.style.display = 'block';
+                pBox.style.display = 'none';
+                qTextContainer.style.display = 'block';
+                window.speechSynthesis.cancel();
+            } else {
+                audioBtn.style.display = 'none';
+                qTextContainer.style.display = 'block';
+                if (q.passage) {
+                    pBox.innerHTML = q.passage;
+                    pBox.style.display = 'block';
+                } else {
+                    pBox.style.display = 'none';
+                }
+            }
+
+            // Question Text
+            const qJp = document.getElementById('question-jp');
+            if (q.questionJP) {
+                qJp.innerHTML = q.questionJP;
+                qJp.style.display = 'block';
+            } else {
+                qJp.style.display = 'none';
+            }
+            document.getElementById('question-en').innerText = q.questionEN;
+
+            // Options
+            const optBox = document.getElementById('options-container');
+            optBox.innerHTML = '';
+            const letters = ['A', 'B', 'C', 'D'];
+
+            q.options.forEach((opt, idx) => {
+                const btn = document.createElement('div');
+                btn.className = `option-btn ${userAnswers[currentIndex] === opt.text ? 'selected' : ''}`;
+                btn.onclick = () => selectOption(opt.text);
+
+                btn.innerHTML = `
+            <span class="option-marker">${letters[idx]}</span>
+            <span>${opt.text}</span>
+        `;
+                optBox.appendChild(btn);
+            });
+
+            // Navigation buttons
+            document.getElementById('btn-prev').disabled = currentIndex === 0;
+
+            if (currentIndex === examQuestions.length - 1) {
+                document.getElementById('btn-next').style.display = 'none';
+                document.getElementById('btn-submit').style.display = 'block';
+            } else {
+                document.getElementById('btn-next').style.display = 'block';
+                document.getElementById('btn-submit').style.display = 'none';
+            }
+
+            updateNavDots();
+        }
+
+        function selectOption(text) {
+            userAnswers[currentIndex] = text;
+            renderQuestion();
+        }
+
+        function playCurrentAudio() {
+            const q = examQuestions[currentIndex];
+            if (q.section !== 'listening' || !q.audioScript) return;
+            
+            window.speechSynthesis.cancel();
+            
+            const utterance = new SpeechSynthesisUtterance(q.audioScript);
+            utterance.lang = 'ja-JP';
+            utterance.rate = 0.85;
+            
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function navigate(dir) {
+            const newIdx = currentIndex + dir;
+            if (newIdx >= 0 && newIdx < examQuestions.length) {
+                currentIndex = newIdx;
+                renderQuestion();
+            }
+        }
+
+        function renderNavDots() {
+            const map = document.getElementById('dot-map');
+            map.innerHTML = '';
+            examQuestions.forEach((_, i) => {
+                const dot = document.createElement('div');
+                dot.className = `dot ${i === currentIndex ? 'current' : ''}`;
+                dot.onclick = () => { currentIndex = i; renderQuestion(); };
+                map.appendChild(dot);
+            });
+        }
+
+        function updateNavDots() {
+            const dots = document.getElementById('dot-map').children;
+            for (let i = 0; i < dots.length; i++) {
+                dots[i].className = 'dot';
+                if (userAnswers[i]) dots[i].classList.add('answered');
+                if (i === currentIndex) dots[i].classList.add('current');
+            }
+        }
+
+        function promptSubmit() {
+            const answeredCount = userAnswers.filter(a => a !== null).length;
+            const total = examQuestions.length;
+            const missing = total - answeredCount;
+
+            const w = document.getElementById('submit-warning');
+            if (missing > 0) {
+                w.innerText = `You have answered ${answeredCount} of ${total} questions. Unanswered questions will be marked incorrect.`;
+                w.style.color = 'var(--incorrect-color)';
+            } else {
+                w.innerText = "You have answered all questions. Ready to submit?";
+                w.style.color = 'var(--text-muted)';
+            }
+
+            document.getElementById('submit-modal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('submit-modal').classList.remove('active');
+        }
+
+        function finalizeExam() {
+            clearInterval(timerInterval);
+            closeModal();
+            renderResults();
+        }
+
+        /* ==========================================
+           RESULTS & SCORING
+        ========================================== */
+        function calculateScores() {
+            let correct = 0;
+            const sectionStats = {
+                vocab: { total: 0, correct: 0 },
+                grammar: { total: 0, correct: 0 },
+                reading: { total: 0, correct: 0 },
+                listening: { total: 0, correct: 0 }
+            };
+
+            examQuestions.forEach((q, i) => {
+                const isCorrect = userAnswers[i] === q.correctAnswer;
+                sectionStats[q.section].total++;
+                if (isCorrect) {
+                    correct++;
+                    sectionStats[q.section].correct++;
+                }
+            });
+
+            return { correct, total: examQuestions.length, sectionStats };
+        }
+
+        function getVerdict(pct) {
+            if (pct >= 90) return "素晴らしい (Excellent)";
+            if (pct >= 70) return "よくできました (Great Job)";
+            if (pct >= 50) return "合格 (Pass)";
+            if (pct >= 30) return "もう少し (Almost There)";
+            return "がんばって (Keep Trying)";
+        }
+
+        function renderResults() {
+            showScreen('results-screen');
+            const { correct, total, sectionStats } = calculateScores();
+            const pct = Math.round((correct / total) * 100);
+
+            document.getElementById('score-percentage').innerText = `${pct}%`;
+            document.getElementById('score-verdict').innerText = getVerdict(pct);
+            document.getElementById('stat-correct').innerText = correct;
+            document.getElementById('stat-wrong').innerText = total - correct;
+            document.getElementById('stat-time').innerText = formatTime(timeTakenSeconds);
+
+            // Render section breakdown
+            const bdContainer = document.getElementById('breakdown-container');
+            bdContainer.innerHTML = '';
+
+            const order = [
+                { key: 'vocab', label: 'Vocabulary · 語彙', color: 'var(--vocab-color)' },
+                { key: 'grammar', label: 'Grammar · 文法', color: 'var(--grammar-color)' },
+                { key: 'reading', label: 'Reading · 読解', color: 'var(--reading-color)' },
+                { key: 'listening', label: 'Listening · 聴解', color: 'var(--listening-color)' }
+            ];
+
+            order.forEach(s => {
+                const st = sectionStats[s.key];
+                const spct = Math.round((st.correct / st.total) * 100);
+                bdContainer.innerHTML += `
+            <div class="breakdown-section">
+                <div class="breakdown-header">
+                    <span>${s.label}</span>
+                    <span>${st.correct}/${st.total} (${spct}%)</span>
+                </div>
+                <div class="breakdown-bar">
+                    <div style="width: ${spct}%; height: 100%; background: ${s.color};"></div>
+                </div>
+            </div>
+        `;
+            });
+
+            // Render full review
+            const reviewBox = document.getElementById('review-container');
+            reviewBox.innerHTML = '';
+
+            examQuestions.forEach((q, i) => {
+                const uAns = userAnswers[i];
+                const isCorrect = uAns === q.correctAnswer;
+                const colorClass = isCorrect ? 'correct' : 'incorrect';
+                const badgeLabel = isCorrect ? 'Correct' : 'Incorrect';
+
+                let audioTranscriptHtml = q.audioScript ? `<div class="explanation-box" style="margin-bottom: 12px; background: #fffbeb;"><strong>Audio Transcript:</strong><br/>${q.audioScript.replace(/\n/g, '<br/>')}</div>` : '';
+                let passageHtml = q.passage ? `<div class="passage-block" style="margin-bottom: 12px; font-size: 1rem; padding: 12px; border-width: 2px;">${q.passage}</div>` : '';
+                let qJpHtml = q.questionJP ? `<div class="review-q-jp">${q.questionJP}</div>` : '';
+
+                reviewBox.innerHTML += `
+            <div class="review-item ${colorClass}">
+                <div class="review-header">
+                    <span style="font-weight: 600; color: var(--text-muted); font-size: 0.875rem;">Q${i + 1} · ${q.section}</span>
+                    <span class="review-badge ${colorClass}">${badgeLabel}</span>
+                </div>
+                ${passageHtml}
+                ${audioTranscriptHtml}
+                ${qJpHtml}
+                <div class="review-q-en">${q.questionEN}</div>
+                
+                <div style="margin-top: 16px;">
+                    ${!isCorrect ? `<div class="review-detail wrong-ans">Your Answer: ${uAns || '(No Answer)'}</div>` : ''}
+                    <div class="review-detail correct-ans">Correct Answer: ${q.correctAnswer}</div>
+                </div>
+                
+                <div class="explanation-box">
+                    <strong>Explanation:</strong><br/>
+                    ${q.explanation}
+                </div>
+            </div>
+        `;
+            });
+        }
+
+        function copyResults() {
+            const { correct, total, sectionStats } = calculateScores();
+            const pct = Math.round((correct / total) * 100);
+            const text = `JLPT N5 Mock Exam Results
+Score: ${pct}% (${correct}/${total})
+Vocabulary: ${sectionStats.vocab.correct}/${sectionStats.vocab.total} | Grammar: ${sectionStats.grammar.correct}/${sectionStats.grammar.total} | Reading: ${sectionStats.reading.correct}/${sectionStats.reading.total} | Listening: ${sectionStats.listening.correct}/${sectionStats.listening.total}
+Try it: ${window.location.href}`;
+
+            navigator.clipboard.writeText(text).then(() => {
+                alert("Results copied to clipboard!");
+            });
+        }
+
+        /* ==========================================
+           KEYBOARD SUPPORT
+        ========================================== */
+        window.addEventListener('keydown', (e) => {
+            if (document.getElementById('exam-screen').classList.contains('active') && !document.getElementById('submit-modal').classList.contains('active')) {
+                const letters = ['A', 'B', 'C', 'D'];
+                const q = examQuestions[currentIndex];
+
+                if (e.key === 'ArrowRight' || e.key.toLowerCase() === 'n') {
+                    if (currentIndex < examQuestions.length - 1) navigate(1);
+                } else if (e.key === 'ArrowLeft' || e.key.toLowerCase() === 'p') {
+                    if (currentIndex > 0) navigate(-1);
+                } else if (['1', '2', '3', '4'].includes(e.key)) {
+                    const idx = parseInt(e.key) - 1;
+                    if (q.options[idx]) selectOption(q.options[idx].text);
+                } else if (['a', 'b', 'c', 'd'].includes(e.key.toLowerCase())) {
+                    const idx = letters.indexOf(e.key.toUpperCase());
+                    if (q.options[idx]) selectOption(q.options[idx].text);
+                }
+            }
+        });
+
+        // Start app
+        window.onload = init;
+    </script>
+</body>
+
+</html>
